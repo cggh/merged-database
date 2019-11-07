@@ -1,3 +1,4 @@
+import pandas
 import yaml
 from collections import OrderedDict
 from os.path import join, isdir, isfile
@@ -22,6 +23,8 @@ from shapely.geometry import JOIN_STYLE, Point
 
 import sys # For: csv.field_size_limit(sys.maxsize)
 import os # For: os.rename('data.tmp', 'data')
+
+import overpass
 
 with open('settings_nosecrets', 'r') as f:
     settings = yaml.load(f, Loader=yaml.BaseLoader)
@@ -301,6 +304,7 @@ def run():
         obs_regions_datatable_dir_path = join(datatables_path, settings["panoptesObsRegionsTable"])
     obs_samples_datatable_dir_path = join(datatables_path, settings["panoptesObsSamplesTable"])
     obs_countries_datatable_dir_path = join(datatables_path, settings["panoptesObsCountriesTable"])
+    obs_locations_datatable_dir_path = join(datatables_path, settings["panoptesObsLocationsTable"])
 
     # Create dirs if the datatable directories are missing.
     if settings["panoptesObsRegionsTable"]:
@@ -315,6 +319,7 @@ def run():
     if settings["panoptesObsRegionsTable"]:
         obs_regions_data_file_path = join(obs_regions_datatable_dir_path, "data")
     obs_samples_data_file_path = join(obs_samples_datatable_dir_path, "data")
+    obs_locations_data_file_path = join(obs_locations_datatable_dir_path, "data")
     obs_countries_data_file_path = join(obs_countries_datatable_dir_path, "data")
 
     # Raise errors if the data files do not exist.
@@ -346,6 +351,25 @@ def run():
                 print(row[study_column], webStudies.get(row[study_column], row[study_column]))
                 row[study_column] = webStudies[row[study_column]]
             writer.writerow(row)
+
+    samples = pandas.read_csv(obs_samples_data_file_path, delimiter=csv_value_separator)
+    locations = pandas.read_csv(obs_locations_data_file_path, delimiter=csv_value_separator)
+    provinces = []
+    for index, row in locations.iterrows():
+        print(
+            'Fetching location data from OSM for ' + row['name'] + ' in ' + row['country_id'])
+        (province, district) = overpass.admin_levels_for_point(row['lat'], row['lng'])
+        provinces.append(province)
+    locations['province_id'] = [province['province_id'] for province in provinces]
+    provinces = pandas.DataFrame(provinces).drop_duplicates('province_id')
+    # Denormalise somethings for convenience
+    samples['province_id'] = [locations.loc[s['location_id'], 'province_id'] for index, s in samples.iterrows()]
+    samples['country_id'] = [locations.loc[s['location_id'], 'country_id'] for index, s in samples.iterrows()]
+
+    os.mkdir(join(datatables_path, 'provinces'))
+    samples.to_csv(obs_samples_data_file_path, delimiter=csv_value_separator)
+    provinces.to_csv(join(datatables_path, 'provinces', 'data'), delimiter=csv_value_separator)
+    locations.to_csv(obs_locations_data_file_path, delimiter=csv_value_separator)
 
     #####################################################################
     ### Generate the region GeoJSON
