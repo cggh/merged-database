@@ -354,6 +354,7 @@ def run():
 
     samples = pandas.read_csv(obs_samples_data_file_path, delimiter=csv_value_separator)
     locations = pandas.read_csv(obs_locations_data_file_path, delimiter=csv_value_separator)
+    locations.set_index('site_id')
     provinces = []
     for index, row in locations.iterrows():
         print(
@@ -363,8 +364,8 @@ def run():
     locations['province_id'] = [province['province_id'] for province in provinces]
     provinces = pandas.DataFrame(provinces).drop_duplicates('province_id')
     # Denormalise somethings for convenience
-    samples['province_id'] = [locations.loc[s['location_id'], 'province_id'] for index, s in samples.iterrows()]
-    samples['country_id'] = [locations.loc[s['location_id'], 'country_id'] for index, s in samples.iterrows()]
+    samples['province_id'] = [locations.loc[s['site_id'], 'province_id'] for index, s in samples.iterrows()]
+    samples['country_id'] = [locations.loc[s['site_id'], 'country_id'] for index, s in samples.iterrows()]
 
     os.mkdir(join(datatables_path, 'provinces'))
     samples.to_csv(obs_samples_data_file_path, delimiter=csv_value_separator)
