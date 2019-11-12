@@ -374,7 +374,7 @@ def run():
     #locations.to_csv(obs_locations_data_file_path, delimiter=csv_value_separator)
 
     markers = pandas.read_csv(
-        'ftp://ngs.sanger.ac.uk/production/malaria/pfcommunityproject/Pf6/Pf_6_resistance_classification.pdf',
+        'ftp://ngs.sanger.ac.uk/production/malaria/pfcommunityproject/Pf6/Pf_6_drug_resistance_marker_genotypes.txt',
         delimiter='\t')
     markers = markers.rename(columns={"Sample": "sample_id"})
     markers = markers.set_index('sample_id')
@@ -389,11 +389,13 @@ def run():
     samples = samples.join(markers)
     samples = samples.join(fws)
 
-    samples.to_csv(obs_samples_data_file_path, delimiter=csv_value_separator)
+    samples.to_csv(obs_samples_data_file_path, index=True, sep=csv_value_separator)
 
     gene_diff = pandas.read_csv('ftp://ngs.sanger.ac.uk/production/malaria/pfcommunityproject/Pf6/Pf_6_genes_data.txt',
                 delimiter='\t')
-    gene_diff.to_csv(join(datatables_path, 'gene_diff', 'data'), delimiter=csv_value_separator)
+    if not isdir(join(datatables_path, 'gene_diff')):
+        os.mkdir(join(datatables_path, 'gene_diff'))
+    gene_diff.to_csv(join(datatables_path, 'gene_diff', 'data'), index=True, sep=csv_value_separator)
 
     #####################################################################
     ### Generate the region GeoJSON
