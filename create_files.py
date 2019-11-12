@@ -395,7 +395,7 @@ def run():
                 delimiter='\t')
     if not isdir(join(datatables_path, 'gene_diff')):
         os.mkdir(join(datatables_path, 'gene_diff'))
-    gene_diff.to_csv(join(datatables_path, 'gene_diff', 'data'), index=True, sep=csv_value_separator)
+    gene_diff.to_csv(join(datatables_path, 'gene_diff', 'data'), sep=csv_value_separator)
 
     #####################################################################
     ### Generate the region GeoJSON
