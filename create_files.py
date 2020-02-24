@@ -353,24 +353,49 @@ def run():
             writer.writerow(row)
 
     samples = pandas.read_csv(obs_samples_data_file_path, delimiter=csv_value_separator)
-    locations = pandas.read_csv(obs_locations_data_file_path, delimiter=csv_value_separator)
-    locations.set_index('site_id')
-    provinces = []
-    for index, row in locations.iterrows():
-        print(
-            'Fetching location data from OSM for ' + row['name'] + ' in ' + row['country_id'])
-        (province, district) = overpass.admin_levels_for_point(row['lat'], row['lng'])
-        provinces.append(province)
-    locations['province_id'] = [province['province_id'] for province in provinces]
-    provinces = pandas.DataFrame(provinces).drop_duplicates('province_id')
-    # Denormalise somethings for convenience
-    samples['province_id'] = [locations.loc[s['site_id'], 'province_id'] for index, s in samples.iterrows()]
-    samples['country_id'] = [locations.loc[s['site_id'], 'country_id'] for index, s in samples.iterrows()]
 
-    os.mkdir(join(datatables_path, 'provinces'))
-    samples.to_csv(obs_samples_data_file_path, delimiter=csv_value_separator)
-    provinces.to_csv(join(datatables_path, 'provinces', 'data'), delimiter=csv_value_separator)
-    locations.to_csv(obs_locations_data_file_path, delimiter=csv_value_separator)
+   #PROVINCE AND DISTRICT NOT NEEDED FOR NOW WITH PF6 AS SITES ARE USUALLY LARGE AREAS
+   # locations = pandas.read_csv(obs_locations_data_file_path, delimiter=csv_value_separator)
+   # locations.set_index('site_id')
+   # provinces = []
+   # for index, row in locations.iterrows():
+   #     print(
+   #         'Fetching location data from OSM for ' + row['name'] + ' in ' + row['country_id'])
+   #     (province, district) = overpass.admin_levels_for_point(row['lat'], row['lng'])
+   #     provinces.append(province)
+   # locations['province_id'] = [province['province_id'] for province in provinces]
+   # provinces = pandas.DataFrame(provinces).drop_duplicates('province_id')
+   # # Denormalise somethings for convenience
+   # samples['province_id'] = [locations.loc[s['site_id'], 'province_id'] for index, s in samples.iterrows()]
+   # samples['country_id'] = [locations.loc[s['site_id'], 'country_id'] for index, s in samples.iterrows()]
+
+    #os.mkdir(join(datatables_path, 'provinces'))
+    #provinces.to_csv(join(datatables_path, 'provinces', 'data'), delimiter=csv_value_separator)
+    #locations.to_csv(obs_locations_data_file_path, delimiter=csv_value_separator)
+
+    markers = pandas.read_csv(
+        'ftp://ngs.sanger.ac.uk/production/malaria/pfcommunityproject/Pf6/Pf_6_drug_resistance_marker_genotypes.txt',
+        delimiter='\t')
+    markers = markers.rename(columns={"Sample": "sample_id"})
+    markers = markers.set_index('sample_id')
+
+    fws = pandas.read_csv(
+        'ftp://ngs.sanger.ac.uk/production/malaria/pfcommunityproject/Pf6/Pf_6_fws.txt',
+        delimiter='\t'
+    )
+    fws = fws.rename(columns={"Sample": "sample_id"})
+    fws = fws.set_index('sample_id')
+
+    samples = samples.join(markers)
+    samples = samples.join(fws)
+
+    samples.to_csv(obs_samples_data_file_path, index=True, sep=csv_value_separator)
+
+    gene_diff = pandas.read_csv('ftp://ngs.sanger.ac.uk/production/malaria/pfcommunityproject/Pf6/Pf_6_genes_data.txt',
+                delimiter='\t')
+    if not isdir(join(datatables_path, 'gene_diff')):
+        os.mkdir(join(datatables_path, 'gene_diff'))
+    gene_diff.to_csv(join(datatables_path, 'gene_diff', 'data'), sep=csv_value_separator)
 
     #####################################################################
     ### Generate the region GeoJSON
