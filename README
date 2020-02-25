@@ -20,6 +20,12 @@ alfrescoUserPass: PASS
 
 ldapUserDN: cn=website,ou=users,ou=system,dc=malariagen,dc=net
 ldapUserPass: PASS (Ian has this)
+
+# The following "client_secret" JSON file can be downloaded from https://console.cloud.google.com/apis/credentials?project=ssdtest-141111
+gsheetsClientSecretPath: PATH
+# The following credentials JSON file will be stored by the the malobs.py script
+gsheetsCredentialsPath: PATH_AS_ABOVE_BUT_WITH_credentials.json
+
 ```
 
 ### Fetch FTP PF6 files and convert for observatory DB
@@ -50,7 +56,15 @@ LDAP checks the host matches what it expects, so we need to fake it by editing /
 127.0.0.1       sso1.malariagen.net
 
 
-### Create final files:
+### Create CSV files:
 python create_files.py 
+
+### Create postgres DB from the CSVs for export to outlandish
+psql -d pf6 < schema.sql
+psql -d pf6 < table-command.sh
+
+### Dump out the resulting DB for sending
+pg_dump pf6 --no-owner --no-privileges > pf6_dump
+
 
 
