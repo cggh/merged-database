@@ -30,6 +30,7 @@ gsheetsCredentialsPath: PATH_AS_ABOVE_BUT_WITH_credentials.json
 
 ### Fetch FTP PF6 files and convert for observatory DB
 ```jupyter notebook fetch_and_convert.ipynb```
+
 Run all cells to produce 3 csv files.
 
 
@@ -54,9 +55,11 @@ gcloud.pub is your google ssl key that you add to the analystaging instance (see
 ssh -N -i ~/.ssh/gcloud.pub -L 127.0.0.1:9999:35.185.117.147:5432 ben_jeffery_well@35.189.232.128
 
 Tunnel to LDAP:
+
 `ssh -N -i ~/.ssh/gcloud.pub -L 127.0.0.1:7777:sso1.malariagen.net:636 ben_jeffery_well@35.189.232.128`
 
 LDAP checks the host matches what it expects, so we need to fake it by editing /etc/hosts:
+
 `127.0.0.1       sso1.malariagen.net`
 
 
