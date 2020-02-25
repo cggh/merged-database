@@ -64,13 +64,15 @@ ssh -N -i ~/.ssh/gcloud.pub -L 127.0.0.1:7777:sso1.malariagen.net:636 ben_jeffer
 
 LDAP checks the host matches what it expects, so we need to fake it by editing /etc/hosts:
 
-``
+```
 127.0.0.1       sso1.malariagen.net
 ```
 
 
 ### Create CSV files:
+```
 python create_files.py 
+```
 
 ### Create postgres DB from the CSVs for export to outlandish
 ```psql -d pf6 < schema.sql
@@ -79,7 +81,8 @@ psql -d pf6 < table-command.sh
 
 ### Dump out the resulting DB for sending
 
-```pg_dump pf6 --no-owner --no-privileges > pf6_dump
+```
+pg_dump pf6 --no-owner --no-privileges > pf6_dump
 ```
 
 
