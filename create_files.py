@@ -524,8 +524,14 @@ def getAlfStudyLdapPeople(ldapPeople, alfStudy, panoptesAlfStudyLdapPeopleGroups
                     for p in alfStudyLdapPeople:
                         if p['malariagenUID'] == malariagenUID:
                             p['class'].append(group_type)
+                            if group_type == 'Contact':
+                                p['contact'] = '1'
                 else:
                     person['class'] = [group_type]
+                    if group_type == 'Contact':
+                        person['contact'] = '1'
+                    else:
+                        person['contact'] = '0'
                     study_people[malariagenUID] = person
                     alfStudyLdapPeople.append(person)
 
