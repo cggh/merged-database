@@ -32,41 +32,27 @@ gsheetsCredentialsPath: PATH_AS_ABOVE_BUT_WITH_credentials.json
 ```jupyter notebook fetch_and_convert.ipynb```
 
 Run all cells to produce 3 csv files.
+(Visual Studio Code works quite nicely for this)
 
+### Backup existing DB
+
+``` pg_dump -h localhost -p 9999 -U outlandish observatory_outlandish -n observatory --no-owner --no-privileges > obs_dump```
 
 ### Upload to postgres
-https://35.185.117.147/phppgadmin/redirect.php  (Lee has login)
 
-Click servers -> PostgreSQL -> login -> observatory_outlandish -> observatory -> samples -> empty
-
-Then "import", choose `samples.csv` and "Empty string/field" as the only checked options
-
-Back to the list of tables and then do the same for `sampletypes` and `sampletypes1/2.csv`, but importing twice as there are two files
-(one is too big for the import process)
-
+```load_files.sh```
 
 ### Tunnel LDAP and postgres
 35.185.117.147 is the postgres server
 
-35.189.232.128 is the analytics staging server we use to tunnel
-
-gcloud.pub is your google ssl key that you add to the analystaging instance (see https://cloud.google.com/compute/docs/instances/adding-removing-ssh-keys)
 
 ```
-ssh -N -i ~/.ssh/gcloud.pub -L 127.0.0.1:9999:35.185.117.147:5432 ben_jeffery_well@35.189.232.128
+gcloud beta compute ssh --zone "us-east1-c" --project "ssdtest-141111" observatory-db -- -N -L 9999:localhost:5432
 ```
 
-Tunnel to LDAP:
+Connection to LDAP:
 
-```
-ssh -N -i ~/.ssh/gcloud.pub -L 127.0.0.1:7777:sso1.malariagen.net:636 ben_jeffery_well@35.189.232.128
-```
-
-LDAP checks the host matches what it expects, so we need to fake it by editing /etc/hosts:
-
-```
-127.0.0.1       sso1.malariagen.net
-```
+Make a temporary hole to allow connection to sso1 on 636 - ask a sysadmin
 
 
 ### Create CSV files:
@@ -75,10 +61,21 @@ python create_files.py
 ```
 
 ### Create postgres DB from the CSVs for export to outlandish
-```psql -d pf6 < schema.sql
-psql -d pf6 < table-command.sh
+```psql -v ON_ERROR_STOP=1 -d pf6 < schema.sql
+```
+```
+./table-command.sh
+```
+Compare the output of print-tables.sh with load_files.psql to see if any
+changes need to be made
+```
+psql -v ON_ERROR_STOP=1 -d pf6 < load_files.psql
 ```
 
+Remove extra columns introduced as necessary for the loading process
+```
+psql -v ON_ERROR_STOP=1 -d pf6 < tidy_up.psql
+```
 ### Dump out the resulting DB for sending
 
 ```
